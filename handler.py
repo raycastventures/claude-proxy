@@ -141,25 +141,34 @@ class ProxyHandler:
                 provider TEXT,
                 routed_model TEXT,
                 duration_seconds REAL,
-                error_message TEXT
+                error_message TEXT,
+                is_streaming BOOLEAN DEFAULT 0
             )
         ''')
         
         conn.commit()
+        
+        # Check if is_streaming column exists, add it if not (migration for existing DBs)
+        cursor.execute("PRAGMA table_info(request_history)")
+        columns = [column[1] for column in cursor.fetchall()]
+        if 'is_streaming' not in columns:
+            cursor.execute('ALTER TABLE request_history ADD COLUMN is_streaming BOOLEAN DEFAULT 0')
+            conn.commit()
+        
         conn.close()
     
     def _save_request_to_db(self, request_id: str, success: bool, tokens: int, 
                            original_model: str, provider: str, routed_model: str,
-                           duration: float, error_msg: str = None):
+                           duration: float, error_msg: str = None, is_streaming: bool = False):
         """Save request details to database"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
         cursor.execute('''
             INSERT INTO request_history 
-            (request_id, success, tokens_used, original_model, provider, routed_model, duration_seconds, error_message)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (request_id, success, tokens, original_model, provider, routed_model, duration, error_msg))
+            (request_id, success, tokens_used, original_model, provider, routed_model, duration_seconds, error_message, is_streaming)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (request_id, success, tokens, original_model, provider, routed_model, duration, error_msg, is_streaming))
         
         conn.commit()
         conn.close()
@@ -346,7 +355,8 @@ class ProxyHandler:
                 original_model=anthropic_req.model,
                 provider=response.get('final_provider', 'unknown'),
                 routed_model=response.get('actual_model', anthropic_req.model),
-                duration=response_time
+                duration=response_time,
+                is_streaming=anthropic_req.stream
             )
             
             # Cache the response
@@ -365,7 +375,8 @@ class ProxyHandler:
                 provider='none',
                 routed_model='none',
                 duration=response_time,
-                error_msg=str(e.detail)
+                error_msg=str(e.detail),
+                is_streaming=anthropic_req.stream if 'anthropic_req' in locals() else False
             )
             # Re-raise HTTP exceptions
             raise
@@ -380,7 +391,8 @@ class ProxyHandler:
                 provider='none',
                 routed_model='none',
                 duration=response_time,
-                error_msg=str(e)
+                error_msg=str(e),
+                is_streaming=anthropic_req.stream if 'anthropic_req' in locals() else False
             )
             logger.error(f"❌ Unexpected error processing request {request_id}: {e}")
             raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

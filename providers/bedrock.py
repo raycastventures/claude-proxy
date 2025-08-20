@@ -190,21 +190,51 @@ class BedrockProvider:
         # This is a simplified streaming implementation
         # In a real implementation, you'd want to properly stream the response
         full_text = ""
+        usage_data = {"input_tokens": 0, "output_tokens": 0}
+        message_id = "streaming_response"
+        stop_reason = "end_turn"
         
         for event in response['body']:
             chunk = json.loads(event['chunk']['bytes'])
-            if chunk['type'] == 'content_block_delta':
+            
+            # Handle different event types
+            if chunk['type'] == 'message_start':
+                # Extract message ID and initial usage if available
+                if 'message' in chunk:
+                    message_id = chunk['message'].get('id', message_id)
+                    if 'usage' in chunk['message']:
+                        usage_data['input_tokens'] = chunk['message']['usage'].get('input_tokens', 0)
+            
+            elif chunk['type'] == 'content_block_delta':
                 if 'delta' in chunk and chunk['delta']['type'] == 'text_delta':
                     full_text += chunk['delta']['text']
+            
+            elif chunk['type'] == 'message_delta':
+                # Capture updated usage and stop reason
+                if 'delta' in chunk:
+                    if 'stop_reason' in chunk['delta']:
+                        stop_reason = chunk['delta']['stop_reason']
+                    if 'usage' in chunk['delta']:
+                        if 'output_tokens' in chunk['delta']['usage']:
+                            usage_data['output_tokens'] = chunk['delta']['usage']['output_tokens']
+            
+            elif chunk['type'] == 'message_stop':
+                # Final message event might contain usage data
+                if 'amazon-bedrock-invocationMetrics' in chunk:
+                    metrics = chunk['amazon-bedrock-invocationMetrics']
+                    if 'inputTokenCount' in metrics:
+                        usage_data['input_tokens'] = metrics['inputTokenCount']
+                    if 'outputTokenCount' in metrics:
+                        usage_data['output_tokens'] = metrics['outputTokenCount']
         
         content_blocks = [AnthropicContentBlock(type="text", text=full_text)]
         
         return {
             "content": content_blocks,
-            "id": "streaming_response",
+            "id": message_id,
             "model": request.model,  # Keep original requested model for compatibility
             "role": "assistant",
-            "stop_reason": "end_turn",
+            "stop_reason": stop_reason,
             "type": "message",
-            "usage": {"input_tokens": 0, "output_tokens": 0}
+            "usage": usage_data
         } 

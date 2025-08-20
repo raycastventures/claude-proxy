@@ -36,7 +36,8 @@ def get_request_history(page=1, page_size=20):
             provider,
             routed_model,
             duration_seconds,
-            error_message
+            error_message,
+            is_streaming
         FROM request_history
         ORDER BY timestamp DESC
         LIMIT ? OFFSET ?
@@ -90,11 +91,21 @@ def main():
         df['tokens_used'] = df['tokens_used'].fillna(0).astype(int)
         df['duration_seconds'] = df['duration_seconds'].round(2)
         
+        # Handle is_streaming column - check if it exists (for backward compatibility)
+        if 'is_streaming' in df.columns:
+            df['is_streaming'] = df['is_streaming'].fillna(0).map({1: 'Yes', 0: 'No'})
+        else:
+            df['is_streaming'] = 'No'  # Default for old records
+        
+        # Add emoji to model names
+        df['original_model'] = df['original_model'].apply(lambda x: f"{'🤏' if 'haiku' in str(x).lower() else '🧠'}  {x}")
+        
         # Rename columns for display
         df = df.rename(columns={
             'timestamp': 'Time',
             'request_id': 'Request ID',
             'success': 'Status',
+            'is_streaming': 'Stream',
             'tokens_used': 'Tokens',
             'original_model': 'Requested Model',
             'provider': 'Provider',
@@ -102,6 +113,10 @@ def main():
             'duration_seconds': 'Duration (s)',
             'error_message': 'Error'
         })
+        
+        # Reorder columns to put Error last
+        column_order = ['Time', 'Request ID', 'Status', 'Stream', 'Tokens', 'Requested Model', 'Provider', 'Routed Model', 'Duration (s)', 'Error']
+        df = df[column_order]
         
         # Configure column widths
         st.dataframe(
@@ -112,6 +127,7 @@ def main():
                 "Time": st.column_config.DatetimeColumn(format="DD/MM HH:mm:ss"),
                 "Request ID": st.column_config.TextColumn(width="small"),
                 "Status": st.column_config.TextColumn(width="small"),
+                "Stream": st.column_config.TextColumn(width="small"),
                 "Tokens": st.column_config.NumberColumn(width="small"),
                 "Duration (s)": st.column_config.NumberColumn(format="%.2f", width="small"),
                 "Error": st.column_config.TextColumn(width="medium"),
