@@ -1,0 +1,65 @@
+# Claude Code Proxy Configuration
+# Copy this file to config.yaml and update with your settings
+
+server:
+  port: "3001"
+  read_timeout: "60s"
+  write_timeout: "60s"
+  idle_timeout: "120s"
+
+providers:
+  bedrock:
+    region: "us-east-1"  # AWS region for Bedrock
+    endpoint: null  # Optional custom endpoint URL
+  
+  openrouter:
+    base_url: "https://openrouter.ai"  # OpenRouter API base URL
+    api_key: "your-openrouter-api-key-here"  # Your OpenRouter API key
+  
+  cerebras:
+    base_url: "https://inference.cerebras.ai"  # Cerebras Inference API base URL
+    api_key: "your-cerebras-api-key-here"  # Your Cerebras API key
+  
+  groq:
+    base_url: "https://api.groq.com/openai/v1"  # Groq API base URL
+    api_key: "your-groq-api-key-here"  # Your Groq API key
+
+routing:
+  enable: true  # Enable provider routing and fallback
+  models:
+    - model: "default"
+      provider_sequence:
+        - name: "bedrock"
+          variants:
+            - model: "us.anthropic.claude-opus-4-1-20250805-v1:0"
+              region: "us-west-2"
+            - model: "us.anthropic.claude-sonnet-4-20250514-v1:0"
+              region: "us-west-2"
+            - model: "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+              region: "us-west-2"
+        - name: "cerebras"  # Add Cerebras as a fallback provider
+          variants: []
+        - name: "groq"  # Add Groq as another fallback provider
+          variants: []
+    - model: "haiku"
+      provider_sequence:
+        - name: "cerebras"  # Use Cerebras for haiku requests
+          variants: []
+        - name: "bedrock"
+          variants:
+            - model: "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+              region: "us-west-2"
+  retry_timeout_millis: 1000  # Retry timeout in milliseconds
+  rate_limit_seconds: 60  # Rate limit duration in seconds
+
+# Environment Variables (override config file):
+# BEDROCK_REGION=us-east-1
+# BEDROCK_ENDPOINT=https://custom-endpoint.com
+# OPENROUTER_BASE_URL=https://openrouter.ai
+# OPENROUTER_API_KEY=your-key
+# CEREBRAS_BASE_URL=https://inference.cerebras.ai
+# CEREBRAS_API_KEY=your-key
+# GROQ_BASE_URL=https://api.groq.com/openai/v1
+# GROQ_API_KEY=your-key
+# PORT=3001
+# ROUTING_ENABLE=true/false
