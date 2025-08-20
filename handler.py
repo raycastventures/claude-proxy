@@ -8,6 +8,10 @@ from datetime import datetime
 from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import StreamingResponse
 import threading
+import sqlite3
+import os
+import subprocess
+import sys
 
 from models import (
     AnthropicRequest, AnthropicResponse, ModelsResponse, 
@@ -95,6 +99,9 @@ class ProxyHandler:
         self.cache_order: List[str] = []  # Track order for LRU eviction
         self.max_cache_size = 10
         
+        # Initialize database
+        self._init_database()
+        
         # Initialize providers
         self._init_providers()
         
@@ -113,6 +120,49 @@ class ProxyHandler:
         @router.post("/messages")
         async def messages_endpoint(request: Request):
             return await self.handle_messages(request)
+    
+    def _init_database(self):
+        """Initialize SQLite database for request logging"""
+        db_path = os.path.join(os.path.dirname(__file__), 'request_history.db')
+        self.db_path = db_path
+        
+        # Create connection and table if not exists
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS request_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                request_id TEXT,
+                success BOOLEAN,
+                tokens_used INTEGER,
+                original_model TEXT,
+                provider TEXT,
+                routed_model TEXT,
+                duration_seconds REAL,
+                error_message TEXT
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+    
+    def _save_request_to_db(self, request_id: str, success: bool, tokens: int, 
+                           original_model: str, provider: str, routed_model: str,
+                           duration: float, error_msg: str = None):
+        """Save request details to database"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO request_history 
+            (request_id, success, tokens_used, original_model, provider, routed_model, duration_seconds, error_message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (request_id, success, tokens, original_model, provider, routed_model, duration, error_msg))
+        
+        conn.commit()
+        conn.close()
     
     def _generate_request_hash(self, body_bytes: bytes) -> str:
         """Generate SHA256 hash of request body for caching"""
@@ -288,15 +338,50 @@ class ProxyHandler:
             tokens = response['usage']['input_tokens'] + response['usage']['output_tokens']
             logger.info(f"{model_emoji} ⬅️ Response completed in {response_time}s | provider={response['final_provider']} | model={response['actual_model']} | tokens={tokens}")
             
+            # Save to database
+            self._save_request_to_db(
+                request_id=request_id,
+                success=True,
+                tokens=tokens,
+                original_model=anthropic_req.model,
+                provider=response.get('final_provider', 'unknown'),
+                routed_model=response.get('actual_model', anthropic_req.model),
+                duration=response_time
+            )
+            
             # Cache the response
             self._add_to_cache(request_hash, response, body_bytes)
             
             return response
             
-        except HTTPException:
+        except HTTPException as e:
+            # Save failed request to database
+            response_time = round(time.time() - start_time, 2)
+            self._save_request_to_db(
+                request_id=request_id,
+                success=False,
+                tokens=0,
+                original_model=anthropic_req.model if 'anthropic_req' in locals() else 'unknown',
+                provider='none',
+                routed_model='none',
+                duration=response_time,
+                error_msg=str(e.detail)
+            )
             # Re-raise HTTP exceptions
             raise
         except Exception as e:
+            # Save failed request to database
+            response_time = round(time.time() - start_time, 2)
+            self._save_request_to_db(
+                request_id=request_id,
+                success=False,
+                tokens=0,
+                original_model=anthropic_req.model if 'anthropic_req' in locals() else 'unknown',
+                provider='none',
+                routed_model='none',
+                duration=response_time,
+                error_msg=str(e)
+            )
             logger.error(f"❌ Unexpected error processing request {request_id}: {e}")
             raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     
@@ -401,3 +486,33 @@ class ProxyHandler:
         
         # Fallback to hardcoded order
         return ['bedrock:fallback', 'openrouter:fallback']
+
+
+def run_streamlit_app(port=8501):
+    """Run the Streamlit app in a separate thread"""
+    def start_streamlit():
+        try:
+            # Run streamlit with the app file
+            subprocess.run([
+                sys.executable, "-m", "streamlit", "run",
+                "streamlit_app.py",
+                "--server.port", str(port),
+                "--server.headless", "true",
+                "--browser.gatherUsageStats", "false",
+                "--logger.level", "error"
+            ], check=False)
+        except Exception as e:
+            logger.error(f"Failed to start Streamlit: {e}")
+    
+    # Start in a daemon thread
+    thread = threading.Thread(target=start_streamlit, daemon=True)
+    thread.start()
+    
+    # Give Streamlit a moment to start
+    time.sleep(2)
+    
+    # Print the URL
+    print(f"\n{'='*60}")
+    print(f"📊 Streamlit Dashboard Available at: http://localhost:{port}")
+    print(f"{'='*60}\n")
+    logger.info(f"📊 Streamlit dashboard running on http://localhost:{port}")

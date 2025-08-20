@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import load_config
-from handler import ProxyHandler
+from handler import ProxyHandler, run_streamlit_app
 from middleware import SimpleLoggingMiddleware
 
 # Configure logging
@@ -101,6 +101,10 @@ async def main():
         # Initialize handler
         handler = ProxyHandler(config)
         
+        # Start Streamlit dashboard in a separate thread
+        streamlit_port = 8501
+        run_streamlit_app(port=streamlit_port)
+        
         # Register routes
         app.include_router(handler.router, prefix="/v1")
         
@@ -117,6 +121,8 @@ async def main():
             return {"status": "healthy", "service": "claude-code-proxy"}
         
         logger.info(f"🚀 Starting server on port {port}")
+        logger.info(f"🔗 Proxy API: http://localhost:{port}")
+        logger.info(f"📊 Dashboard: http://localhost:{streamlit_port}")
         
         # Configure uvicorn to use HTTP/2 for better performance
         config_uvicorn = uvicorn.Config(
