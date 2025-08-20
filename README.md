@@ -1,5 +1,24 @@
 # Claude Code Proxy (Python)
 
+
+## Setup
+
+Add this to your ~/.zshrc or bashrc:
+
+```
+export ANTHROPIC_BASE_URL='http://localhost:3001'
+export CLAUDE_CODE_OAUTH_TOKEN='test'
+export API_TIMEOUT_MS=600000
+```
+
+Then
+
+```
+uv run main.py
+```
+
+## Intro
+
 A simplified Python implementation of the Claude Code Proxy that focuses on routing Anthropic requests to AWS Bedrock and OpenRouter providers. This proxy maintains compatibility with the original Go implementation while providing a lightweight Python alternative.
 
 ## Features
@@ -139,9 +158,6 @@ routing:
 # Run directly
 uv run main.py
 
-# Or run with the run script
-uv run run.py
-
 # Or run in development mode with auto-reload
 uv run --reload main.py
 ```
@@ -149,8 +165,6 @@ uv run --reload main.py
 #### With pip:
 ```bash
 python main.py
-# or
-python run.py
 ```
 
 The proxy will start on port 8000 by default.
