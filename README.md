@@ -5,7 +5,7 @@ A Python-based proxy server for routing Claude API requests across multiple prov
 ## Quick Start
 
 1. **Create config.yaml**:
-   ```yaml
+```yaml
   server:
     port: "3001"
     read_timeout: "300s"
@@ -40,7 +40,7 @@ A Python-based proxy server for routing Claude API requests across multiple prov
 
     retry_timeout_millis: 1000
     rate_limit_seconds: 10
-   ```
+```
 
 2. **Set AWS credentials** (for Bedrock):
    ```bash
