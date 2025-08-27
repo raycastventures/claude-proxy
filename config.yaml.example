@@ -7,25 +7,12 @@ server:
 providers:
   bedrock:
     region: us-west-2
-  openrouter:
-    api_key: "API_KEY"
-    base_url: https://openrouter.a
-  cerebras:
-    api_key: "API_KEY"
-  groq:
-    api_key: "API_KEY"
 
 routing:
   enable: true
   models:
    -  model: "default"
       provider_sequence:
-        # - name: "cerebras"
-        #   variants:
-        #     - model: gpt-oss-120b
-        # - name: "groq"
-        #   variants:
-        #     - model: openai/gpt-oss-120b
         - name: "bedrock"
           variants:
             - model: us.anthropic.claude-opus-4-1-20250805-v1:0
@@ -49,12 +36,6 @@ routing:
    -  model: "haiku"
     # - model: "default" 
       provider_sequence:
-        - name: "cerebras"
-          variants:
-            - model: gpt-oss-120b
-        - name: "groq"
-          variants:
-            - model: openai/gpt-oss-120b
         - name: "bedrock"
           variants:
             - model: us.anthropic.claude-3-5-haiku-20241022-v1:0
