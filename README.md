@@ -85,7 +85,9 @@ Access at: http://localhost:8501
 
 ## Why not directly use the official Claude Bedrock support?
 
-It only allows you to set one model and this quickly times out on most AWS accounts as they are limited to 2 requests per minute without having to go through a lengthy support ticket process. This proxy allows you to specify a few fallback models/regions which allows you to continue requesting without encountering 429. This project also provides a dashboard and more provider support (I like to route Haiku requests to Cerebras so they are instant). Note that Claude Code only uses Haiku requests to generate cosmetic messages (Such as "Thinking...").
+It only allows you to set one model and this quickly times out on most AWS accounts as they are limited to 2 requests per minute without having to go through a lengthy support ticket process. This proxy allows you to specify a few fallback models/regions which allows you to continue requesting without encountering 429s.
+
+This project also provides a dashboard and more provider support (I like to route Haiku requests to Cerebras so they are instant). Note that Claude Code only uses Haiku requests to generate cosmetic messages (Such as "Thinking...").
 
 ## Why not CCR (Claude Code Router)?
 
