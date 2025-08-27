@@ -26,7 +26,7 @@ def load_config(config_path: Optional[str] = None) -> Config:
     # Environment variable overrides
     env_overrides = {
         "server": {
-            "port": os.getenv("PORT", "8000"),
+            "port": os.getenv("PORT", "3001"),
             "read_timeout": os.getenv("READ_TIMEOUT", "60s"),
             "write_timeout": os.getenv("WRITE_TIMEOUT", "60s"),
             "idle_timeout": os.getenv("IDLE_TIMEOUT", "120s"),
