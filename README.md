@@ -53,6 +53,27 @@ A Python-based proxy server for routing Claude API requests across multiple prov
    uv run main.py
    ```
 
+## Web Dashboard
+
+The proxy includes a Streamlit web interface for monitoring request history and performance metrics.
+
+![Dashboard Screenshot](dashboard.png)
+
+Access at: http://localhost:8501
+
+### Features
+- **Request History**: View all API requests with pagination
+- **Success Metrics**: Track success rates and performance
+- **Token Usage**: Monitor token consumption across requests
+- **Error Analysis**: Review failed requests and error messages
+- **Real-time Stats**: Live updates of proxy performance
+
+### Dashboard Sections
+- **Request Table**: Timestamp, status, tokens, provider, duration
+- **Summary Stats**: Success rate, average duration, total tokens
+- **Pagination**: Navigate through request history
+- **Refresh**: Real-time data updates
+
 ## Features
 
 - **Multi-Provider Support**: AWS Bedrock, OpenAI, Cerebras, Groq and OpenRouter integration
@@ -112,13 +133,13 @@ uv run main.py
 # With pip
 python main.py
 ```
-Server runs on port 8000 by default.
+Server runs on port 3001 by default.
 
 ### API Endpoints
 
 **Main endpoint**: `POST /v1/messages`
 ```bash
-curl -X POST http://localhost:8000/v1/messages \
+curl -X POST http://localhost:3001/v1/messages \
   -H "Content-Type: application/json" \
   -d '{
     "model": "claude-3-sonnet-20240229",
@@ -135,33 +156,10 @@ curl -X POST http://localhost:8000/v1/messages \
 ### Streaming Support
 Add `"stream": true` to your request for real-time responses:
 ```bash
-curl -X POST http://localhost:8000/v1/messages \
+curl -X POST http://localhost:3001/v1/messages \
   -H "Content-Type: application/json" \
   -d '{"model": "claude-3-sonnet-20240229", "stream": true, "max_tokens": 1000, "messages": [{"role": "user", "content": "Tell me a story"}]}'
 ```
-
-## Web Dashboard
-
-The proxy includes a Streamlit web interface for monitoring request history and performance metrics.
-
-### Start the Dashboard
-```bash
-streamlit run streamlit_app.py
-```
-Access at: http://localhost:8501
-
-### Features
-- **Request History**: View all API requests with pagination
-- **Success Metrics**: Track success rates and performance
-- **Token Usage**: Monitor token consumption across requests
-- **Error Analysis**: Review failed requests and error messages
-- **Real-time Stats**: Live updates of proxy performance
-
-### Dashboard Sections
-- **Request Table**: Timestamp, status, tokens, provider, duration
-- **Summary Stats**: Success rate, average duration, total tokens
-- **Pagination**: Navigate through request history
-- **Refresh**: Real-time data updates
 
 ## Provider Routing
 
@@ -176,20 +174,6 @@ The proxy automatically routes requests across providers with intelligent fallba
 ```
 Request → Bedrock (Sonnet) → Bedrock (Haiku) → OpenRouter (Sonnet) → Response
 ```
-
-## Monitoring
-
-### Debug Endpoint
-```bash
-curl http://localhost:8000/debug
-```
-Returns rate limits, routing config, and provider status.
-
-### Health Check  
-```bash
-curl http://localhost:8000/health
-```
-Returns service status and timestamp.
 
 ## Development
 
@@ -230,7 +214,6 @@ streamlit run streamlit_app.py
 **Common Issues:**
 - Verify AWS credentials are configured
 - Check OpenRouter API key is set
-- Monitor `/debug` endpoint for rate limits
 - Review proxy logs for error details
 
 ## License

@@ -59,8 +59,8 @@ async def main():
             logger.error("❌ Failed to load configuration")
             sys.exit(1)
         
-        # Check if port 3001 is available
-        port = 3001
+        # Get port from config with fallback to 3001
+        port = int(config.server.port)
         if not check_port_availability(port):
             logger.error(f"❌ Port {port} is not available. Please stop the service using this port or use a different port.")
             sys.exit(1)
