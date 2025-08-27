@@ -53,6 +53,15 @@ A Python-based proxy server for routing Claude API requests across multiple prov
    uv run main.py
    ```
 
+## Features
+
+- **Multi-Provider Support**: AWS Bedrock, OpenAI, Cerebras, Groq and OpenRouter integration
+- **Intelligent Fallback**: Automatic failover between providers and models
+- **Rate Limiting**: Built-in protection against rate limits
+- **Streaming Support**: Real-time response streaming
+- **Request Monitoring**: SQLite-based request history tracking
+- **Web Dashboard**: Streamlit frontend for monitoring requests
+
 ## Web Dashboard
 
 The proxy includes a Streamlit web interface for monitoring request history and performance metrics.
@@ -74,14 +83,17 @@ Access at: http://localhost:8501
 - **Pagination**: Navigate through request history
 - **Refresh**: Real-time data updates
 
-## Features
+## Why not directly use the official Claude Bedrock support?
 
-- **Multi-Provider Support**: AWS Bedrock, OpenAI, Cerebras, Groq and OpenRouter integration
-- **Intelligent Fallback**: Automatic failover between providers and models
-- **Rate Limiting**: Built-in protection against rate limits
-- **Streaming Support**: Real-time response streaming
-- **Request Monitoring**: SQLite-based request history tracking
-- **Web Dashboard**: Streamlit frontend for monitoring requests
+It only allows you to set one model and this quickly times out on most AWS accounts as they are limited to 2 requests per minute without having to go through a lengthy support ticket process. This proxy allows you to specify a few fallback models/regions which allows you to continue requesting without encountering 429. This project also provides a dashboard and more provider support (I like to route Haiku requests to Cerebras so they are instant). Note that Claude Code only uses Haiku requests to generate cosmetic messages (Such as "Thinking...").
+
+## Why not CCR (Claude Code Router)?
+
+CCR is a great project but was not suitable for my personal requirements, and it's complex structure makes it difficult to adjust to my liking. In short:
+
+- Fallback support when encountering 429s (Mostly on Bedrock)
+- Dashboard for tracking requests/errors, not for config editing
+- Simpler setup/code architecture
 
 ## Architecture
 
