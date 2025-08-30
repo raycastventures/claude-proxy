@@ -233,10 +233,12 @@ class ProxyHandler:
                         try:
                             # OpenRouter needs base_url and api_key from main config
                             if hasattr(self.config.providers, 'openrouter') and self.config.providers.openrouter:
-                                base_url = self.config.providers.openrouter.base_url or "https://openrouter.ai"
+                                base_url = self.config.providers.openrouter.base_url or "https://openrouter.ai/api"
+                                model_variants = [variant.dict() for variant in route.variants]
                                 self.providers[provider_key] = OpenRouterProvider(
                                     base_url=base_url,
-                                    api_key=self.config.providers.openrouter.api_key
+                                    api_key=self.config.providers.openrouter.api_key,
+                                    model_variants=model_variants
                                 )
                             else:
                                 logger.warning("⚠️ OpenRouter provider not configured in providers section")
