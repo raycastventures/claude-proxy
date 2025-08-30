@@ -37,7 +37,7 @@ def load_config(config_path: Optional[str] = None) -> Config:
                 "endpoint": os.getenv("BEDROCK_ENDPOINT"),
             },
             "openrouter": {
-                "base_url": os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai"),
+                "base_url": os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api"),
                 "api_key": os.getenv("OPENROUTER_API_KEY", ""),
             },
             "cerebras": {
@@ -45,7 +45,7 @@ def load_config(config_path: Optional[str] = None) -> Config:
                 "api_key": os.getenv("CEREBRAS_API_KEY", ""),
             },
             "groq": {
-                "base_url": os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1"),
+                "base_url": os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai"),
                 "api_key": os.getenv("GROQ_API_KEY", ""),
             }
         },

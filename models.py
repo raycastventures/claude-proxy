@@ -97,14 +97,12 @@ class BedrockProviderConfig(BaseModel):
 
 
 class OpenRouterProviderConfig(BaseModel):
-    base_url: str
     api_key: str
-
-
+    base_url: Optional[str] = None
+    
 class CerebrasProviderConfig(BaseModel):
     api_key: str
     base_url: Optional[str] = None
-
 
 class GroqProviderConfig(BaseModel):
     api_key: str
