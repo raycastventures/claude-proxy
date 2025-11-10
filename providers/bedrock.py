@@ -12,10 +12,11 @@ logger = logging.getLogger(__name__)
 class BedrockProvider:
     """AWS Bedrock provider implementation with region-based client caching"""
     
-    def __init__(self, model_variants: Optional[List[Dict[str, Any]]] = None):
+    def __init__(self, profile_name = None, model_variants: Optional[List[Dict[str, Any]]] = None):
         self.model_variants = model_variants or []
         # Cache for region-based clients
         self._clients: Dict[str, Any] = {}
+        self._session = boto3.Session(profile_name=profile_name)
         
     def name(self) -> str:
         return "bedrock"
@@ -23,9 +24,10 @@ class BedrockProvider:
     def _get_client(self, region: str):
         """Get or create a Bedrock client for the specified region"""
         if region not in self._clients:
-            self._clients[region] = boto3.client(
+            self._clients[region] = self._session.client(
                 'bedrock-runtime',
                 region_name=region,
+                
                 config=boto3.session.Config(
                     read_timeout=10000,  # No read timeout
                     connect_timeout=10000,  # No connect timeout

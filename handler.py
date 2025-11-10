@@ -224,6 +224,7 @@ class ProxyHandler:
                             # Convert variants to dict format for the provider
                             model_variants = [variant.dict() for variant in route.variants]
                             self.providers[provider_key] = BedrockProvider(
+                                profile_name=self.config.providers.bedrock.profile_name,
                                 model_variants=model_variants
                             )
                         except Exception as e:

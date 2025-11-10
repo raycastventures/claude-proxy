@@ -94,6 +94,7 @@ class RoutingConfig(BaseModel):
 class BedrockProviderConfig(BaseModel):
     region: str
     endpoint: Optional[str] = None
+    profile_name: str
 
 
 class OpenRouterProviderConfig(BaseModel):
